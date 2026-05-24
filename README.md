@@ -34,6 +34,18 @@ Le script de hardening ajoute:
 - blocage des suppressions destructrices sur dimensions referencees,
 - table `Batch_Control` pour piloter la cloture quotidienne.
 
+### 2.4 Rappel: OLAP et schema en etoile
+Dans ce projet, OLAP (Online Analytical Processing) designe la couche analytique qui sert aux calculs de reporting (CA, tops, repartitions), par opposition a OLTP qui gere les transactions operationnelles.
+
+La logique d'architecture est:
+- OLTP (source transactionnelle) -> batch d'extraction -> OLAP (entrepot) -> dataviz (Power BI).
+
+Le modele OLAP retenu est un schema en etoile:
+- une table de faits centrale: `Faits_Ventes`,
+- des dimensions autour: `Dim_Clients`, `Dim_Produits`, `Dim_Employe`, `Dim_Calendrier`.
+
+Ce modele facilite les agregations rapides (CA par date, client, employe, produit).
+
 ## 3. Arborescence
 
 ### 3.1 Bases et SQL
@@ -60,20 +72,33 @@ Les fichiers Excel de travail ont ete centralises dans `data/xlsx/`:
 - `data/xlsx/logs.xlsx`: version tableur des logs techniques
 - `data/xlsx/pour_insertion_bd.xlsx`: version tableur des donnees d'insertion
 
-### 3.4 Notebooks (ordre recommande)
+### 3.4 Diagrammes OLAP
+- `data/diagrammes/SuperMarketOlap.png`: vue image du modele OLAP utilise dans le projet.
+
+### 3.5 Notebooks (ordre recommande)
 - `01_construction_base_relationnelle.ipynb`: construit et alimente la base relationnelle `database/db/SuperMarket1.db` depuis Excel.
 - `02_controles_olap_et_logs.ipynb`: controle la qualite des faits OLAP, produit les requetes d'analyse et investigue les logs.
 - `03_audit_technique_complet.ipynb`: notebook principal, combine insertion/controle/restitution et audit Partie 2 automatise.
 
-### 3.5 Documentation
+### 3.6 Documentation
 - `documentation/`: mission, glossaire, schemas, rapport
 - `docus/03_plan_execution.md`: mode operatoire rapide
 - `docus/04_rapport_oral_court.md`: trame de presentation orale
 - `docus/templates/template_support_presentation.pptx`: template de support de presentation
 
-### 3.6 Schema de donnees de reference
+### 3.7 Schema de donnees de reference (PNG)
 - `documentation/schemaBD.png`: schema visuel de reference du modele de donnees utilise.
 - Le fichier SVG n'est pas necessaire pour l'execution du projet.
+
+Representation du modele de donnees:
+
+![Schema OLAP en etoile](documentation/schemaBD.png)
+
+Comment lire ce schema:
+- la table de faits porte les mesures (ventes),
+- les dimensions apportent les axes d'analyse,
+- les cles etrangeres relient les faits aux dimensions,
+- les requetes analytiques joignent ces tables pour produire les KPI.
 
 ## 4. Installation
 
