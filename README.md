@@ -1,4 +1,4 @@
-﻿# SuperMarket - Audit Architecture Donnees (Projet 4)
+﻿# SuperMarket - Audit Architecture Donnees
 
 ## 1. Objectif
 Ce depot contient un POC d'audit data pour analyser une instabilite du chiffre d'affaires historique.
@@ -71,6 +71,10 @@ Les fichiers Excel de travail ont ete centralises dans `data/xlsx/`:
 - `docus/04_rapport_oral_court.md`: trame de presentation orale
 - `docus/templates/template_support_presentation.pptx`: template de support de presentation
 
+### 3.6 Schema de donnees de reference
+- `documentation/schemaBD.png`: schema visuel de reference du modele de donnees utilise.
+- Le fichier SVG n'est pas necessaire pour l'execution du projet.
+
 ## 4. Installation
 
 ### 4.1 Prerequis
@@ -85,7 +89,64 @@ git clone https://github.com/PascalDuval/SuperMarket.git
 cd SuperMarket
 ```
 
-### 4.3 Environnement Python (optionnel)
+### 4.3 Installer SQLite (sqlite3)
+
+#### Windows
+1. Telecharger les binaires SQLite depuis le site officiel:
+  https://www.sqlite.org/download.html
+2. Prendre le package `sqlite-tools-win-x64-*.zip`.
+3. Dezipper dans un dossier (exemple: `C:\sqlite`).
+4. Ajouter ce dossier au `PATH` Windows.
+5. Verifier:
+  ```bash
+  sqlite3 --version
+  ```
+
+Alternative Windows: installer `DB Browser for SQLite` (interface graphique) depuis:
+https://sqlitebrowser.org/
+
+#### macOS
+SQLite est generalement preinstalle. Verifier:
+```bash
+sqlite3 --version
+```
+Si absent:
+```bash
+brew install sqlite
+```
+
+#### Linux (Debian/Ubuntu)
+```bash
+sudo apt update
+sudo apt install sqlite3
+sqlite3 --version
+```
+
+### 4.4 Initialiser les bases selon le modele (schema PNG)
+Le schema de reference est dans `documentation/schemaBD.png`.
+
+Objectif:
+- base relationnelle: `database/db/SuperMarket1.db`
+- base analytique: `database/db/SuperMarketOlap.db`
+
+Option A (rapide, recommande): restaurer depuis les dumps SQL
+```bash
+sqlite3 database/db/SuperMarket1.db ".read database/sql/SuperMarket1.db.sql"
+sqlite3 database/db/SuperMarketOlap.db ".read database/sql/SuperMarketOlap.db.sql"
+```
+
+Option B (via notebooks):
+1. Executer `01_construction_base_relationnelle.ipynb` pour construire/remplir la base relationnelle.
+2. Executer `02_controles_olap_et_logs.ipynb` pour les controles OLAP et validations.
+3. Executer `03_audit_technique_complet.ipynb` pour l'audit final.
+
+Verification rapide des tables OLAP:
+```bash
+sqlite3 database/db/SuperMarketOlap.db ".tables"
+```
+Vous devez voir au minimum: `Dim_Calendrier`, `Dim_Clients`, `Dim_Employe`, `Dim_Produits`, `Faits_Ventes`.
+
+### 4.5 Environnement Python (optionnel)
 ```bash
 python -m venv .venv
 # PowerShell
@@ -93,7 +154,7 @@ python -m venv .venv
 pip install jupyter pandas matplotlib
 ```
 
-### 4.4 Lancer les notebooks
+### 4.6 Lancer les notebooks
 ```bash
 jupyter notebook
 ```
