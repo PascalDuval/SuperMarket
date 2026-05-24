@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="" readonly="0" foreign_keys="" case_sensitive_like="" temp_store="" wal_autocheckpoint="" synchronous=""/><attached/><window><main_tabs open="browser pragmas query" current="0"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="3248"/><column_width id="4" width="0"/></tab_structure><tab_browse><table title="." custom_title="0" dock_id="6" table="0,0:"/><dock_state state="000000ff00000000fd00000001000000020000032800000226fc0100000006fb000000160064006f0063006b00420072006f00770073006500310100000000000003280000000000000000fb000000160064006f0063006b00420072006f00770073006500320100000000000003280000000000000000fb000000160064006f0063006b00420072006f00770073006500330100000000000003280000000000000000fb000000160064006f0063006b00420072006f00770073006500340100000000000003280000000000000000fb000000160064006f0063006b00420072006f00770073006500350100000000000003280000000000000000fb000000160064006f0063006b00420072006f00770073006500360100000000000003280000011b00ffffff0000025b0000000000000004000000040000000800000008fc00000000"/><default_encoding codec=""/><browse_table_settings/></tab_browse><tab_sql><sql name="SQL 1*">PRAGMA foreign_keys = ON;
+
+----------------------------------------------------------------------
+-- TABLE: Produits
+----------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS &quot;Produits&quot; (
+  &quot;EAN&quot;              TEXT PRIMARY KEY,                  -- garder en texte (zéros à gauche)
+  &quot;categorie&quot;        TEXT NOT NULL,
+  &quot;Rayon&quot;            TEXT NOT NULL,
+  &quot;Libelle_produit&quot;  TEXT NOT NULL,
+  &quot;prix&quot;             NUMERIC NOT NULL CHECK (&quot;prix&quot; &gt;= 0)
+  -- Option (à décommenter si tu veux forcer des EAN standard uniquement) :
+  -- , CHECK (&quot;EAN&quot; GLOB '[0-9]*' AND length(&quot;EAN&quot;) IN (8,12,13))
+);
+CREATE INDEX IF NOT EXISTS idx_produits_rayon      ON &quot;Produits&quot;(&quot;Rayon&quot;);
+CREATE INDEX IF NOT EXISTS idx_produits_categorie  ON &quot;Produits&quot;(&quot;categorie&quot;);
+
+----------------------------------------------------------------------
+-- TABLE: Clients
+----------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS &quot;Clients&quot; (
+  &quot;CUSTOMER_ID&quot;      TEXT PRIMARY KEY,  -- ex: CUST-XXXXXXXXXXXX (17)
+  &quot;date_inscription&quot; TEXT NOT NULL
+     CHECK (length(&quot;date_inscription&quot;) = 10 AND &quot;date_inscription&quot; GLOB '____-__-__')
+);
+
+CREATE INDEX IF NOT EXISTS idx_clients_date ON &quot;Clients&quot;(&quot;date_inscription&quot;);
+
+----------------------------------------------------------------------
+-- TABLE: Employé
+----------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS &quot;Employé&quot; (
+  &quot;id_employe&quot;  TEXT PRIMARY KEY
+     CHECK (length(&quot;id_employe&quot;) = 32 AND &quot;id_employe&quot; GLOB '[0-9a-f]*'),
+  &quot;employe&quot;     TEXT UNIQUE NOT NULL,               -- login (Unicode)
+  &quot;prenom&quot;      TEXT NOT NULL,
+  &quot;nom&quot;         TEXT NOT NULL,
+  &quot;date_debut&quot;  TEXT NOT NULL
+     CHECK (length(&quot;date_debut&quot;) = 10 AND &quot;date_debut&quot; GLOB '____-__-__'),
+  &quot;hash_mdp&quot;    TEXT,                               -- donnée sensible (accès restreint)
+  &quot;mail&quot;        TEXT UNIQUE NOT NULL
+);
+
+----------------------------------------------------------------------
+-- TABLE: Vente Détail  (pas de colonnes CA/quantité/PUV comme demandé)
+----------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS &quot;Vente Détail&quot; (
+  &quot;ID_BDD&quot;       TEXT PRIMARY KEY,
+  &quot;CUSTOMER_ID&quot;  TEXT NOT NULL,
+  &quot;id_employe&quot;   TEXT NOT NULL,
+  &quot;EAN&quot;          TEXT NOT NULL,
+  &quot;Date achat&quot;   TEXT NOT NULL
+     CHECK (length(&quot;Date achat&quot;) = 10 AND &quot;Date achat&quot; GLOB '____-__-__'),
+  &quot;ID ticket&quot;    TEXT NOT NULL,
+  FOREIGN KEY (&quot;CUSTOMER_ID&quot;) REFERENCES &quot;Clients&quot;(&quot;CUSTOMER_ID&quot;)
+    ON UPDATE CASCADE ON DELETE RESTRICT,
+  FOREIGN KEY (&quot;id_employe&quot;)  REFERENCES &quot;Employé&quot;(&quot;id_employe&quot;)
+    ON UPDATE CASCADE ON DELETE RESTRICT,
+  FOREIGN KEY (&quot;EAN&quot;)         REFERENCES &quot;Produits&quot;(&quot;EAN&quot;)
+    ON UPDATE CASCADE ON DELETE RESTRICT
+);
+CREATE INDEX IF NOT EXISTS idx_vd_date     ON &quot;Vente Détail&quot;(&quot;Date achat&quot;);
+CREATE INDEX IF NOT EXISTS idx_vd_ean      ON &quot;Vente Détail&quot;(&quot;EAN&quot;);
+CREATE INDEX IF NOT EXISTS idx_vd_client   ON &quot;Vente Détail&quot;(&quot;CUSTOMER_ID&quot;);
+CREATE INDEX IF NOT EXISTS idx_vd_ticket   ON &quot;Vente Détail&quot;(&quot;ID ticket&quot;);
+CREATE INDEX IF NOT EXISTS idx_vd_employe  ON &quot;Vente Détail&quot;(&quot;id_employe&quot;);
+
+----------------------------------------------------------------------
+-- OPTIONNEL: Historique de prix (SCD2). 
+-- Crée-la seulement si tu veux valoriser les ventes au prix &quot;valide à la date&quot;.
+----------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS &quot;prix_produit&quot; (
+  &quot;EAN&quot;        TEXT NOT NULL,
+  &quot;prix&quot;       NUMERIC NOT NULL CHECK (&quot;prix&quot; &gt;= 0),
+  &quot;valid_from&quot; TEXT NOT NULL
+     CHECK (length(&quot;valid_from&quot;) = 10 AND &quot;valid_from&quot; GLOB '____-__-__'),
+  &quot;valid_to&quot;   TEXT
+     CHECK (&quot;valid_to&quot; IS NULL OR (length(&quot;valid_to&quot;) = 10 AND &quot;valid_to&quot; GLOB '____-__-__')),
+  PRIMARY KEY (&quot;EAN&quot;,&quot;valid_from&quot;),
+  FOREIGN KEY (&quot;EAN&quot;) REFERENCES &quot;Produits&quot;(&quot;EAN&quot;)
+    ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_pp_ean_valid ON &quot;prix_produit&quot;(&quot;EAN&quot;,&quot;valid_from&quot;,&quot;valid_to&quot;);
+</sql><sql name="SQL 5*">ALTER TABLE Clients RENAME TO Clients_old;
+CREATE TABLE Clients (
+    CUSTOMER_ID TEXT PRIMARY KEY,
+    date_inscription TEXT NOT NULL CHECK(length(date_inscription) &gt;= 8)
+);
+INSERT INTO Clients (CUSTOMER_ID, date_inscription)
+SELECT CUSTOMER_ID, date_inscription
+FROM Clients_old;
+DROP TABLE Clients_old;
+
+
+</sql><sql name="SQL 6*">ALTER TABLE Employé RENAME TO Employe_old;
+CREATE TABLE Employé (
+    id_employe TEXT PRIMARY KEY,
+    employe    TEXT UNIQUE NOT NULL,
+    prenom     TEXT NOT NULL,
+    nom        TEXT NOT NULL,
+    date_debut TEXT NOT NULL CHECK (length(date_debut) &gt;= 8),
+    hash_mdp   TEXT,
+    mail       TEXT UNIQUE NOT NULL
+);
+INSERT INTO Employé (id_employe, employe, prenom, nom, date_debut, hash_mdp, mail)
+SELECT id_employe, employe, prenom, nom, date_debut, hash_mdp, mail
+FROM Employe_old;
+DROP TABLE Employe_old;
+SELECT * FROM Employé LIMIT 10;
+
+</sql><sql name="SQL 7*">ALTER TABLE &quot;Vente Détail&quot; RENAME TO VenteDetail_old;
+
+CREATE TABLE &quot;Vente Détail&quot; (
+    ID_BDD TEXT PRIMARY KEY,
+    CUSTOMER_ID TEXT NOT NULL,
+    id_employe TEXT NOT NULL,
+    EAN TEXT NOT NULL,
+    Date_achat TEXT NOT NULL CHECK(length(Date_achat) &gt;= 8),
+    ID_ticket TEXT NOT NULL,
+    FOREIGN KEY (CUSTOMER_ID) REFERENCES Clients(CUSTOMER_ID)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    FOREIGN KEY (id_employe) REFERENCES Employé(id_employe)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    FOREIGN KEY (EAN) REFERENCES Produits(EAN)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+INSERT INTO &quot;Vente Détail&quot; (ID_BDD, CUSTOMER_ID, id_employe, EAN, Date_achat, ID_ticket)
+SELECT ID_BDD, CUSTOMER_ID, id_employe, EAN, &quot;Date achat&quot;, &quot;ID ticket&quot;
+FROM VenteDetail_old;
+
+DROP TABLE VenteDetail_old;
+</sql><sql name="SQL 8*">SELECT name FROM sqlite_master WHERE type='table';
+</sql><sql name="SQL 9*">
+DROP TABLE VenteDetail_old;</sql><sql name="SQL 10*">SELECT v.&quot;Date_achat&quot; AS date_achat,
+       ROUND(SUM(p.prix), 2) AS chiffre_affaires
+FROM &quot;Vente Détail&quot; v
+JOIN Produits p ON v.EAN = p.EAN
+WHERE v.&quot;Date_achat&quot; = '2024-08-14'
+GROUP BY v.&quot;Date_achat&quot;;
+</sql><current_tab id="6"/></tab_sql></sqlb_project>
