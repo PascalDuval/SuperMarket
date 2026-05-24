@@ -1,5 +1,5 @@
--- Partie 2 - Requetes d'audit (SQLite)
--- Base cible: SuperMarketOlap.db
+﻿-- Partie 2 - Requetes d'audit (SQLite)
+-- Base cible: database/db/SuperMarketOlap.db
 
 -- 1) CA du 14/08/2024 dans le cube OLAP (date Excel 45518)
 SELECT ROUND(SUM(p.prix), 2) AS ca_14_08_2024
@@ -71,3 +71,6 @@ ORDER BY ca_employe DESC;
 SELECT COUNT(*) AS nb_ids_user_invalides
 FROM Logs
 WHERE id_user NOT GLOB '[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]';
+
+
+

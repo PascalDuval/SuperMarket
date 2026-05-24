@@ -1,140 +1,147 @@
-# SuperMarket - Audit Architecture Donnees (Projet 4)
+﻿# SuperMarket - Audit Architecture Donnees (Projet 4)
 
-## 1) Objectif du projet
-Ce projet reproduit une mission d'audit data sur un systeme retail.
-Le probleme metier est une instabilite du chiffre d'affaires historique dans les reportings.
+## 1. Objectif
+Ce depot contient un POC d'audit data pour analyser une instabilite du chiffre d'affaires historique.
 
-Le perimetre couvre:
-- la reconstruction locale d'un prototype analytique,
-- la verification SQL des indicateurs cles,
+Le travail couvre:
+- la reconstruction locale d'une base analytique,
+- la verification SQL des indicateurs metier,
 - l'analyse des logs techniques,
-- la proposition de correctifs de robustesse (transactionnalite, triggers, gouvernance logs).
+- la proposition de correctifs de robustesse transactionnelle.
 
-## 2) Solution base de donnees choisie
-### Choix technique
-La solution retenue est SQLite pour le POC local.
+## 2. Choix de la solution base de donnees
 
-Pourquoi SQLite:
-- execution locale simple, sans serveur a installer,
-- format fichier unique facile a partager,
-- SQL standard suffisant pour l'audit,
-- support des transactions et triggers pour simuler des controles ACID.
+### 2.1 Moteur retenu: SQLite
+Le projet utilise SQLite pour le prototype local.
 
-### Modele de donnees
+Justification:
+- aucun serveur a installer,
+- execution reproductible sur un simple fichier,
+- SQL standard et support des transactions/triggers,
+- excellent format pour une mission d'audit et de demonstration.
+
+### 2.2 Modele de donnees
 Le modele principal est un schema en etoile:
-- table de faits: Faits_Ventes
-- dimensions: Dim_Clients, Dim_Produits, Dim_Employe, Dim_Calendrier
+- table de faits: `Faits_Ventes`
+- dimensions: `Dim_Clients`, `Dim_Produits`, `Dim_Employe`, `Dim_Calendrier`
 
-Ce modele est adapte a l'analyse du CA et aux agregations (top clients, part par employe, etc.).
+Ce modele est adapte aux analyses de CA (total, top clients, part par employe).
 
-### Correctifs de robustesse (Partie 2)
-Un script de hardening ajoute:
-- verification FK explicite a l'insertion des faits,
-- blocage des insertions retroactives apres cloture,
-- blocage des suppressions de dimensions referencees,
-- table de controle Batch_Control pour la date de cloture journaliere.
+### 2.3 Renforcement de robustesse
+Le script de hardening ajoute:
+- controle FK explicite lors des insertions de faits,
+- blocage des insertions retroactives via date de cloture,
+- blocage des suppressions destructrices sur dimensions referencees,
+- table `Batch_Control` pour piloter la cloture quotidienne.
 
-## 3) Arborescence et role des fichiers
+## 3. Arborescence
 
-### Bases et scripts SQL
-- SuperMarketOlap.db: base analytique principale (schema en etoile)
-- SuperMarketOlap.db.sql: dump SQL de la base analytique
-- SuperMarket1.db: base relationnelle source/prototype
-- SuperMarket1.db.sql: dump SQL de la base relationnelle
-- SuperMarket1.sqbpro: projet SQLite Browser (SuperMarket1)
-- SuperMarketOlap.sqbpro: projet SQLite Browser (SuperMarketOlap)
+### 3.1 Bases et SQL
+- `database/db/SuperMarketOlap.db`: base analytique principale
+- `database/db/SuperMarket1.db`: base relationnelle/prototype
+- `database/sql/SuperMarketOlap.db.sql`: dump SQL de la base OLAP
+- `database/sql/SuperMarket1.db.sql`: dump SQL de la base relationnelle
+- `database/sql/01_audit_requetes.sql`: requetes d'audit metier et qualite
+- `database/sql/02_hardening_triggers.sql`: script de durcissement ACID
+- `database/projects/SuperMarketOlap.sqbpro`: projet DB Browser (OLAP)
+- `database/projects/SuperMarket1.sqbpro`: projet DB Browser (relationnel)
 
-### Donnees dimensions/faits (CSV)
-- Dim_Calendrier.csv: dimension calendrier
-- Dim_Clients.csv: dimension clients
-- Dim_Employe.csv: dimension employes
-- Dim_Produits.csv: dimension produits
-- Faits_Ventes.csv: table de faits brute
-- Faits_Ventes_valid.csv: faits valides
-- Faits_Ventes_invalid.csv: faits invalides
-- Produits.csv: extraction produits complete
-- PourInsertionBD.csv: donnees preparees pour insertion en base
+### 3.2 Donnees CSV
+Tous les CSV ont ete centralises dans `data/csv/`:
+- dimensions: `Dim_Calendrier.csv`, `Dim_Clients.csv`, `Dim_Employe.csv`, `Dim_Produits.csv`
+- faits: `Faits_Ventes.csv`, `Faits_Ventes_valid.csv`, `Faits_Ventes_invalid.csv`
+- autres donnees: `Produits.csv`, `PourInsertionBD.csv`, `Logs.csv`, `LogsPourInsert.csv`
 
-### Logs
-- Logs.csv: logs techniques principaux
-- LogsPourInsert.csv: version logs orientee insertion
-- Logs.xlsx: logs au format tableur
+### 3.3 Notebooks
+- `InsertionDBprojet4.ipynb`: creation/chargement de base relationnelle
+- `SuperMarketOlap1.ipynb`: analyses SQL et investigation logs
+- `SuperMarket2.ipynb`: notebook principal de restitution + audit automatique
 
-### Notebooks
-- InsertionDBprojet4.ipynb: notebook d'insertion/transformation
-- SuperMarketOlap1.ipynb: notebook d'analyse OLAP (Partie 1/2)
-- SuperMarket2.ipynb: notebook principal de restitution et audit
+### 3.4 Documentation
+- `documentation/`: mission, glossaire, schemas, rapport
+- `docus/03_plan_execution.md`: mode operatoire rapide
+- `docus/04_rapport_oral_court.md`: trame de presentation orale
 
-### Documentation source
-- documentation/Mission-audit-architecture-donnees.pdf: scope de mission
-- documentation/structure.pdf: support structure/data
-- documentation/Glossaire+des+données.pdf: definitions metier et techniques
-- documentation/Rapport+d'audit.docx: rapport d'audit
-- documentation/RapportauditRempli.docx: version rapport completee
-- documentation/Mission d'audit d'architecture et données.pptx: support mission
-- documentation/schemaBD.png: schema base (PNG)
-- documentation/schemaBD.svg: schema base (SVG)
-- documentation/Schéma+architecture+.jpg: schema architecture
+## 4. Installation
 
-### Livrables d'audit produits dans ce projet
-- docus/01_audit_requetes.sql: requetes SQL de verification
-- docus/02_hardening_triggers.sql: triggers de durcissement ACID
-- docus/03_plan_execution.md: plan d'execution des controles
-- docus/04_rapport_oral_court.md: trame orale courte (5 min)
-
-### Fichiers de travail/archives ignores
-- docus/archive/: artefacts locaux non versionnes (temp/checkpoints)
-- .venv/ et .venv-1/: environnements virtuels locaux
-
-## 4) Installation et execution
-
-### Prerequis
+### 4.1 Prerequis
 - Git
 - Python 3.10+
-- Jupyter (optionnel, pour notebooks)
-- DB Browser for SQLite ou sqlite3 (optionnel, pour SQL manuel)
+- Jupyter (si execution notebooks)
+- DB Browser for SQLite ou `sqlite3` (si execution SQL manuelle)
 
-### Cloner le projet
+### 4.2 Clonage
 ```bash
 git clone https://github.com/PascalDuval/SuperMarket.git
 cd SuperMarket
 ```
 
-### Configurer l'environnement Python (optionnel notebooks)
+### 4.3 Environnement Python (optionnel)
 ```bash
 python -m venv .venv
-# Windows PowerShell
+# PowerShell
 .\.venv\Scripts\Activate.ps1
 pip install jupyter pandas matplotlib
 ```
 
-### Lancer les notebooks
+### 4.4 Lancer les notebooks
 ```bash
 jupyter notebook
 ```
-Puis ouvrir SuperMarket2.ipynb.
+Ouvrir ensuite `SuperMarket2.ipynb`.
 
-### Executer l'audit SQL (Partie 2)
-1. Ouvrir SuperMarketOlap.db dans SQLite Browser.
-2. Executer docus/02_hardening_triggers.sql.
-3. Executer:
+## 5. Execution des scripts SQL (rigoureuse)
+
+### 5.1 Ordre d'execution recommande
+1. Ouvrir `database/db/SuperMarketOlap.db`.
+2. Executer `database/sql/02_hardening_triggers.sql`.
+3. Initialiser la cloture du 14/08/2024:
+   ```sql
    UPDATE Batch_Control SET closed_date_excell = '45518' WHERE id = 1;
-4. Executer docus/01_audit_requetes.sql.
+   ```
+4. Executer `database/sql/01_audit_requetes.sql`.
 
-Resultats attendus:
-- CA du 14/08/2024 autour de 284243.88
-- mise en evidence du decalage d'ecriture en logs
-- blocage des insertions retroactives et suppressions destructrices
+### 5.2 Ce que fait chaque script
 
-## 5) Versioning et hygiene git
-Le fichier .gitignore exclut:
-- environnements Python locaux,
+#### `database/sql/02_hardening_triggers.sql`
+- Active les foreign keys (`PRAGMA foreign_keys = ON`).
+- Cree la table `Batch_Control`.
+- Cree les triggers:
+  - `trg_check_fk_vente`
+  - `trg_block_retroactive_insert`
+  - `trg_block_delete_client`
+  - `trg_block_delete_produit`
+  - `trg_block_delete_employe`
+  - `trg_block_delete_date`
+
+Objectif: proteger l'integrite du cube et stabiliser l'historique.
+
+#### `database/sql/01_audit_requetes.sql`
+- Calcule le CA du 14/08/2024.
+- Quantifie les ventes loguees le 15/08/2024.
+- Mesure la valeur des ventes decalees.
+- Produit top 10 clients et part du CA par employe.
+- Controle la qualite des identifiants utilisateurs dans les logs.
+
+Objectif: produire des preuves SQL de l'anomalie et des indicateurs attendus.
+
+### 5.3 Resultats attendus
+- CA du 14/08/2024 autour de `284243.88`.
+- Mise en evidence d'un decalage d'ecriture entre date de vente et date de log.
+- Blocage effectif des insertions retroactives et suppressions incoherentes.
+
+## 6. Hygiene git
+Le fichier `.gitignore` exclut:
+- environnements Python locaux (`.venv`, `.venv-1`),
 - checkpoints Jupyter,
-- docus/archive (fichiers inutiles au depot).
+- archives locales (`docus/archive/`).
 
-## 6) Statut
-Projet structure pour une remise technique avec:
-- preuves SQL,
-- correctifs de robustesse,
-- documentation d'execution,
-- support de restitution orale.
+## 7. Statut
+Le depot est structure pour une remise technique avec:
+- organisation claire des artefacts (`database/`, `data/csv/`),
+- scripts SQL executables et documentes,
+- notebooks alignes sur la nouvelle arborescence,
+- documentation de restitution.
+
+
+

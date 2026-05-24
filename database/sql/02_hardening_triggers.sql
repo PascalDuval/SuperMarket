@@ -1,5 +1,5 @@
--- Partie 2 - Durcissement ACID pour le prototype SQLite
--- Base cible: SuperMarketOlap.db
+﻿-- Partie 2 - Durcissement ACID pour le prototype SQLite
+-- Base cible: database/db/SuperMarketOlap.db
 -- Remarque: activer les FK sur la session SQLite courante.
 PRAGMA foreign_keys = ON;
 
@@ -100,3 +100,6 @@ COMMIT;
 
 -- Exemple de cloture quotidienne (a executer en fin de batch du jour J):
 -- UPDATE Batch_Control SET closed_date_excell = '45518' WHERE id = 1;
+
+
+

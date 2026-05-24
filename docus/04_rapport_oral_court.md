@@ -1,4 +1,4 @@
-# Rapport d'audit - Version orale courte (5 minutes)
+﻿# Rapport d'audit - Version orale courte (5 minutes)
 
 ## 1. Contexte et architecture
 SuperSmartMarket observe une instabilite du chiffre d'affaires historique dans Power BI.
@@ -40,6 +40,8 @@ Ajouter les champs suivants dans les logs:
 - timestamp ISO 8601
 
 ## 7. Livrables techniques associes
-- docus/01_audit_requetes.sql
-- docus/02_hardening_triggers.sql
+- database/sql/01_audit_requetes.sql
+- database/sql/02_hardening_triggers.sql
 - docus/03_plan_execution.md
+
+
