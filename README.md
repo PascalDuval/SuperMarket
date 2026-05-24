@@ -160,6 +160,17 @@ jupyter notebook
 ```
 Ouvrir ensuite les notebooks dans l'ordre 01 -> 02 -> 03.
 
+Configuration du noyau Jupyter (important):
+1. Ouvrir le notebook dans VS Code ou Jupyter.
+2. Selectionner le kernel Python du projet (`.venv` ou environnement Conda choisi).
+3. Verifier en cellule:
+  ```python
+  import sys
+  print(sys.executable)
+  ```
+4. Le chemin affiche doit pointer vers l'environnement attendu (et non le Python systeme).
+5. Si le mauvais noyau est selectionne, les imports/packages peuvent echouer.
+
 ## 5. Logique d'execution des notebooks
 
 ### 5.1 Pourquoi un ordre est necessaire
@@ -207,15 +218,38 @@ Fonctions utilitaires importantes:
 - `excel_to_iso`, `clean_text`, `is_valid_iso_date`: qualite des donnees en entree.
 - `insert_valid_rows`: encapsule l'insertion securisee avec messages d'erreur.
 
-### 5.4 Recommandation pratique
-Pour un rendu jury:
-- executer 01 une fois pour montrer l'ingestion,
-- executer 02 pour les preuves analytiques,
-- executer 03 comme demo finale de robustesse.
+### 5.4 Proposition de tests (et observations attendues)
+
+Test A - Construction relationnelle (`01_construction_base_relationnelle.ipynb`)
+- Action: executer toutes les cellules du notebook 01.
+- A observer:
+  - creation/verification des tables sans erreur,
+  - insertion des donnees avec volumes > 0,
+  - controle FK sans anomalies majeures.
+
+Test B - Controles OLAP (`02_controles_olap_et_logs.ipynb`)
+- Action: executer les cellules de controle des faits/dimensions puis les requetes metier.
+- A observer:
+  - separation correcte des faits valides/invalides,
+  - CA du 14/08/2024 autour de 284243.88,
+  - tableaux Top 10 clients et part par employe coherents.
+
+Test C - Investigation logs (`02_controles_olap_et_logs.ipynb`)
+- Action: executer les cellules d'analyse logs CSV/XLSX.
+- A observer:
+  - presence d'un decalage entre date d'ecriture et date de vente,
+  - explication de l'instabilite du CA historique.
+
+Test D - Robustesse triggers (`03_audit_technique_complet.ipynb`)
+- Action: executer la section Partie 2 (copie base + hardening + tests blocage).
+- A observer:
+  - blocage insertion retroactive = OK,
+  - blocage suppression dimension referencee = OK,
+  - KPI audit affiches sans erreur SQL.
 
 ## 6. Execution des scripts SQL (rigoureuse)
 
-### 5.1 Ordre d'execution recommande
+### 6.1 Ordre d'execution recommande
 1. Ouvrir `database/db/SuperMarketOlap.db`.
 2. Executer `database/sql/02_hardening_triggers.sql`.
 3. Initialiser la cloture du 14/08/2024:
@@ -224,7 +258,7 @@ Pour un rendu jury:
    ```
 4. Executer `database/sql/01_audit_requetes.sql`.
 
-### 5.2 Ce que fait chaque script
+### 6.2 Ce que fait chaque script
 
 #### `database/sql/02_hardening_triggers.sql`
 - Active les foreign keys (`PRAGMA foreign_keys = ON`).
@@ -248,7 +282,7 @@ Objectif: proteger l'integrite du cube et stabiliser l'historique.
 
 Objectif: produire des preuves SQL de l'anomalie et des indicateurs attendus.
 
-### 5.3 Resultats attendus
+### 6.3 Resultats attendus
 - CA du 14/08/2024 autour de `284243.88`.
 - Mise en evidence d'un decalage d'ecriture entre date de vente et date de log.
 - Blocage effectif des insertions retroactives et suppressions incoherentes.
