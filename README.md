@@ -52,15 +52,24 @@ Tous les CSV ont ete centralises dans `data/csv/`:
 - faits: `Faits_Ventes.csv`, `Faits_Ventes_valid.csv`, `Faits_Ventes_invalid.csv`
 - autres donnees: `Produits.csv`, `PourInsertionBD.csv`, `Logs.csv`, `LogsPourInsert.csv`
 
-### 3.3 Notebooks
+### 3.3 Donnees XLSX
+Les fichiers Excel de travail ont ete centralises dans `data/xlsx/`:
+- `data/xlsx/extraction_cube_olap_14_aout_2024.xlsx`: extraction Excel du cube OLAP
+- `data/xlsx/dataset_cours_power_bi.xlsx`: jeu de donnees de reference pour exercices Power BI
+- `data/xlsx/dictionnaire_donnees_extraction_16_sept_2025.xlsx`: dictionnaire de donnees au format Excel
+- `data/xlsx/logs.xlsx`: version tableur des logs techniques
+- `data/xlsx/pour_insertion_bd.xlsx`: version tableur des donnees d'insertion
+
+### 3.4 Notebooks
 - `InsertionDBprojet4.ipynb`: creation/chargement de base relationnelle
 - `SuperMarketOlap1.ipynb`: analyses SQL et investigation logs
 - `SuperMarket2.ipynb`: notebook principal de restitution + audit automatique
 
-### 3.4 Documentation
+### 3.5 Documentation
 - `documentation/`: mission, glossaire, schemas, rapport
 - `docus/03_plan_execution.md`: mode operatoire rapide
 - `docus/04_rapport_oral_court.md`: trame de presentation orale
+- `docus/templates/template_support_presentation.pptx`: template de support de presentation
 
 ## 4. Installation
 
