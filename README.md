@@ -60,10 +60,10 @@ Les fichiers Excel de travail ont ete centralises dans `data/xlsx/`:
 - `data/xlsx/logs.xlsx`: version tableur des logs techniques
 - `data/xlsx/pour_insertion_bd.xlsx`: version tableur des donnees d'insertion
 
-### 3.4 Notebooks
-- `InsertionDBprojet4.ipynb`: creation/chargement de base relationnelle
-- `SuperMarketOlap1.ipynb`: analyses SQL et investigation logs
-- `SuperMarket2.ipynb`: notebook principal de restitution + audit automatique
+### 3.4 Notebooks (ordre recommande)
+- `01_construction_base_relationnelle.ipynb`: construit et alimente la base relationnelle `database/db/SuperMarket1.db` depuis Excel.
+- `02_controles_olap_et_logs.ipynb`: controle la qualite des faits OLAP, produit les requetes d'analyse et investigue les logs.
+- `03_audit_technique_complet.ipynb`: notebook principal, combine insertion/controle/restitution et audit Partie 2 automatise.
 
 ### 3.5 Documentation
 - `documentation/`: mission, glossaire, schemas, rapport
@@ -97,9 +97,62 @@ pip install jupyter pandas matplotlib
 ```bash
 jupyter notebook
 ```
-Ouvrir ensuite `SuperMarket2.ipynb`.
+Ouvrir ensuite les notebooks dans l'ordre 01 -> 02 -> 03.
 
-## 5. Execution des scripts SQL (rigoureuse)
+## 5. Logique d'execution des notebooks
+
+### 5.1 Pourquoi un ordre est necessaire
+Le projet manipule plusieurs couches:
+- couche relationnelle (`SuperMarket1.db`) pour l'ingestion/normalisation,
+- couche analytique (`SuperMarketOlap.db`) pour les controles CA et l'audit logs.
+
+Un ordre non maitrise peut produire des erreurs (table absente, chemins de donnees incorrects, controles lances sans preconditions).
+
+### 5.2 Ordre strict conseille
+1. `01_construction_base_relationnelle.ipynb`
+2. `02_controles_olap_et_logs.ipynb`
+3. `03_audit_technique_complet.ipynb`
+
+### 5.3 Role exact de chaque notebook
+
+#### `01_construction_base_relationnelle.ipynb`
+- ouvre `database/db/SuperMarket1.db`,
+- cree/verifie les tables `Produits`, `Clients`, `Employé`, `Vente Détail`,
+- charge `data/xlsx/pour_insertion_bd.xlsx`,
+- convertit les dates Excel en ISO,
+- insere les donnees et verifie les volumes + controles FK.
+
+Fonctions cles:
+- `excel_to_iso`: conversion serie Excel / formats texte -> `YYYY-MM-DD`.
+- `clean_text`: normalisation des champs texte.
+- `count_rows`: verification des volumes charges.
+
+#### `02_controles_olap_et_logs.ipynb`
+- ouvre `database/db/SuperMarketOlap.db`,
+- charge `data/csv/Faits_Ventes.csv`,
+- verifie les correspondances entre faits et dimensions,
+- separe faits valides/invalides,
+- execute les requetes metier (CA 14/08, top 10 clients, part employe),
+- analyse les logs (`data/csv/Logs.csv`, `data/xlsx/logs.xlsx`) pour expliquer l'instabilite du CA.
+
+#### `03_audit_technique_complet.ipynb`
+- reprend un flux complet de restitution,
+- applique un audit automatique Partie 2,
+- copie `database/db/SuperMarketOlap.db` vers une base de travail,
+- applique `database/sql/02_hardening_triggers.sql`,
+- execute les controles de blocage (retro-insert, suppression dimension) et les KPI d'audit.
+
+Fonctions utilitaires importantes:
+- `excel_to_iso`, `clean_text`, `is_valid_iso_date`: qualite des donnees en entree.
+- `insert_valid_rows`: encapsule l'insertion securisee avec messages d'erreur.
+
+### 5.4 Recommandation pratique
+Pour un rendu jury:
+- executer 01 une fois pour montrer l'ingestion,
+- executer 02 pour les preuves analytiques,
+- executer 03 comme demo finale de robustesse.
+
+## 6. Execution des scripts SQL (rigoureuse)
 
 ### 5.1 Ordre d'execution recommande
 1. Ouvrir `database/db/SuperMarketOlap.db`.
@@ -139,13 +192,13 @@ Objectif: produire des preuves SQL de l'anomalie et des indicateurs attendus.
 - Mise en evidence d'un decalage d'ecriture entre date de vente et date de log.
 - Blocage effectif des insertions retroactives et suppressions incoherentes.
 
-## 6. Hygiene git
+## 7. Hygiene git
 Le fichier `.gitignore` exclut:
 - environnements Python locaux (`.venv`, `.venv-1`),
 - checkpoints Jupyter,
 - archives locales (`docus/archive/`).
 
-## 7. Statut
+## 8. Statut
 Le depot est structure pour une remise technique avec:
 - organisation claire des artefacts (`database/`, `data/csv/`),
 - scripts SQL executables et documentes,

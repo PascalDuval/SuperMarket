@@ -5,6 +5,11 @@
 - Le repository distant [PascalDuval/SuperMarket](https://github.com/PascalDuval/SuperMarket) est vide a date.
 - Le travail exploitable est donc celui du workspace local.
 
+## Ordre des notebooks (recommande)
+1. `01_construction_base_relationnelle.ipynb`
+2. `02_controles_olap_et_logs.ipynb`
+3. `03_audit_technique_complet.ipynb`
+
 ## Livrables prepares dans ce dossier
 - database/sql/01_audit_requetes.sql: requetes de verification (CA, top clients, part employe, anomalies logs).
 - database/sql/02_hardening_triggers.sql: triggers de protection et controle de cloture batch.
